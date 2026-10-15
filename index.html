@@ -2,27 +2,1090 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>Sisyphus Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sisyphus Engine — 薛西弗斯：存在主義行動與決策引擎</title>
   <style>
-    /* 1. CSS Reset & Typography */
-    /* 2. CSS Variables (Dark Minimalist Theme) */
-    /* 3. Grid / Flexbox Layout System */
-    /* 4. Canvas Styling & Micro-interactions */
+    :root {
+      --bg-primary: #0F1115;
+      --bg-panel: #181B20;
+      --bg-card: #20242B;
+      --border-color: #2E3440;
+      --text-main: #ECEFF4;
+      --text-muted: #8892B0;
+      --accent-gold: #EBCB8B;
+      --accent-cyan: #88C0D0;
+      --accent-red: #BF616A;
+      --radius: 8px;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 頂部哲學語錄狀態列 */
+    header {
+      background-color: #12151B;
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quote-ticker {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      font-style: italic;
+      font-family: monospace;
+      max-width: 650px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .audio-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+    }
+    .audio-toggle-btn.active {
+      color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+    }
+
+    /* 主架構佈局 */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+      padding: 20px 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 992px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 視窗面板容器 */
+    .panel {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+    }
+
+    /* Canvas 物理視窗 */
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: radial-gradient(circle at 75% 20%, #1c212a 0%, #12151a 80%);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    canvas#sisyphusCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* 物理狀態儀表 */
+    .telemetry-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .telemetry-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      border-radius: var(--radius);
+      text-align: center;
+    }
+
+    .telemetry-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .telemetry-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-top: 4px;
+    }
+
+    .canvas-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 9px 16px;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: #2b313c;
+      border-color: #4c566a;
+    }
+
+    .btn-danger {
+      color: var(--accent-red);
+      border-color: rgba(191, 97, 106, 0.4);
+    }
+    .btn-danger:hover {
+      background: rgba(191, 97, 106, 0.15);
+      border-color: var(--accent-red);
+    }
+
+    .btn-gold {
+      color: var(--accent-gold);
+      border-color: rgba(235, 203, 139, 0.4);
+    }
+    .btn-gold:hover {
+      background: rgba(235, 203, 139, 0.15);
+      border-color: var(--accent-gold);
+    }
+
+    /* 右側 Tab 切換系統 */
+    .tabs-header {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      font-size: 0.92rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: var(--accent-gold);
+      border-bottom-color: var(--accent-gold);
+      font-weight: 600;
+    }
+
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* 任務輸入清單表單 */
+    .task-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-field {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 9px 12px;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .input-field:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .select-field {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 9px 12px;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 380px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .task-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .task-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-gold);
+      cursor: pointer;
+    }
+
+    .task-text {
+      font-size: 0.9rem;
+    }
+    .task-item.completed .task-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .task-weight-badge {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #2e3440;
+      color: var(--accent-cyan);
+      font-family: monospace;
+    }
+
+    .task-del-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 1rem;
+      transition: color 0.2s;
+    }
+    .task-del-btn:hover {
+      color: var(--accent-red);
+    }
+
+    /* 命運之愛：決策輪盤與動機解構 */
+    .sub-section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-gold);
+      margin-bottom: 8px;
+    }
+
+    .matrix-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .matrix-result {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-left: 3px solid var(--accent-gold);
+      padding: 12px 16px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 0.86rem;
+      display: none;
+    }
+
+    .wheel-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding-top: 10px;
+    }
+
+    .wheel-canvas-box {
+      position: relative;
+      width: 240px;
+      height: 240px;
+    }
+
+    canvas#wheelCanvas {
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 18px solid var(--accent-gold);
+      z-index: 5;
+    }
+
+    .wheel-result-box {
+      min-height: 44px;
+      text-align: center;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      width: 100%;
+      border: 1px solid var(--border-color);
+      font-size: 0.9rem;
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 12px 24px;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-top: auto;
+    }
   </style>
 </head>
 <body>
-  <div id="app">
-    <!-- Header: Amor Fati Bar -->
-    <!-- Main Canvas: Sisyphus Canvas -->
-    <!-- Control Panels: Task Board & Decision Engine -->
-  </div>
+
+  <!-- 頂部狀態列 -->
+  <header>
+    <div class="brand-title">
+      <span>▲</span> Sisyphus Engine
+    </div>
+    <div class="quote-ticker" id="philosophicalQuote">
+      「向高處掙扎本身，足以充實一顆人心。我們必須想像薛西弗斯是幸福的。」—— 阿爾貝·卡繆
+    </div>
+    <button class="audio-toggle-btn active" id="audioToggle">音效: ON</button>
+  </header>
+
+  <!-- 主控制視窗 -->
+  <main>
+    <!-- 左側：物理推石畫布與觀測儀 -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">存在主義推石動態場 (The Hill of Absurdity)</span>
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">CANVAS 2D PHYSICS</span>
+      </div>
+
+      <div class="canvas-container">
+        <canvas id="sisyphusCanvas" width="600" height="380"></canvas>
+      </div>
+
+      <div class="telemetry-bar">
+        <div class="telemetry-card">
+          <div class="telemetry-label">目前高度</div>
+          <div class="telemetry-val" id="heightTelemetry">0%</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">已扛負擔</div>
+          <div class="telemetry-val" id="taskTelemetry">0/0</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">登頂反抗次數</div>
+          <div class="telemetry-val" id="summitCount">0</div>
+        </div>
+      </div>
+
+      <div class="canvas-actions">
+        <button class="btn btn-gold" id="btnReachSummit" style="flex: 1;">
+          ⚡ 意志登頂 (Summit Breakthrough)
+        </button>
+        <button class="btn btn-danger" id="btnRollDown" style="flex: 1;">
+          ↺ 承認荒謬並滾落 (The Fall)
+        </button>
+      </div>
+    </section>
+
+    <!-- 右側：雙分頁功能 -->
+    <section class="panel">
+      <div class="tabs-header">
+        <button class="tab-btn active" data-tab="tab-tasks">薛西弗斯日常清單</button>
+        <button class="tab-btn" data-tab="tab-amor">命運之愛與動機解構</button>
+      </div>
+
+      <!-- Tab A: 任務清單 -->
+      <div class="tab-content active" id="tab-tasks">
+        <div class="task-input-row">
+          <input type="text" class="input-field" id="taskInput" placeholder="輸入今日的推石任務（例：讀 20 頁文獻、深蹲訓練...）" />
+          <select class="select-field" id="taskWeight">
+            <option value="1">輕石 (1x)</option>
+            <option value="2" selected>中石 (2x)</option>
+            <option value="3">巨石 (3x)</option>
+          </select>
+          <button class="btn" id="btnAddTask">賦予負擔</button>
+        </div>
+
+        <ul class="task-list" id="taskListContainer">
+          <!-- 任務動態生成處 -->
+        </ul>
+      </div>
+
+      <!-- Tab B: 命運之愛與動機解構 -->
+      <div class="tab-content" id="tab-amor">
+        <div>
+          <div class="sub-section-title">客觀動機因果解構 (Motives Analyzer)</div>
+          <div class="matrix-form">
+            <input type="text" class="input-field" id="factInput" placeholder="1. 純粹客觀事實（排除情緒與主觀指責）">
+            <input type="text" class="input-field" id="externalInput" placeholder="2. 對方或外在局勢的現實動機（利益、立場或侷限）">
+            <input type="text" class="input-field" id="controlInput" placeholder="3. 我在此刻絕對可掌控的最小行動">
+            <button class="btn" id="btnAnalyzeMatrix">凝視深淵並解構</button>
+          </div>
+          <div class="matrix-result" id="matrixResultBox"></div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 6px 0;">
+
+        <div>
+          <div class="sub-section-title">意志裁決輪盤 (Amor Fati Decision Wheel)</div>
+          <div class="task-input-row" style="margin-bottom: 8px;">
+            <input type="text" class="input-field" id="wheelItemInput" placeholder="新增抉擇項目（如：立即行動、延後覆盤...）">
+            <button class="btn" id="btnAddWheelItem">新增選項</button>
+          </div>
+
+          <div class="wheel-container">
+            <div class="wheel-canvas-box">
+              <div class="wheel-pointer"></div>
+              <canvas id="wheelCanvas" width="240" height="240"></canvas>
+            </div>
+            <button class="btn btn-gold" id="btnSpinWheel" style="width: 100%;">宣告意志並旋轉 (Decide)</button>
+            <div class="wheel-result-box" id="wheelResultText">輪盤待命：命運不給予藉口，唯有意志。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 頁尾宣告 -->
+  <footer>
+    Sisyphus: Existential Action & Decision Engine | Single-File Architecture | Pure Vanilla JS & Web Audio
+  </footer>
 
   <script>
-    // 1. Data Store & LocalStorage Controller
-    // 2. HTML5 Canvas Physics Engine (Sisyphus, Boulder, Hill)
-    // 3. Task Management Logic
-    // 4. Decision Wheel & Logic Matrix Controller
-    // 5. Web Audio Synth Engine (Optional sound effects)
+    /* ==========================================================================
+       1. 哲學警句資料庫與音效模組 (Philosophy & Web Audio)
+       ========================================================================== */
+    const QUOTES = [
+      "「向高處掙扎本身，足以充實一顆人心。我們必須想像薛西弗斯是幸福的。」—— 阿爾貝·卡繆",
+      "「何為良藥？—— 克服重負的強大意志；何為有害？—— 軟弱與對宿命的自憐。」—— 弗里德里希·尼采",
+      "「要熱愛你的命運（Amor Fati），因為那是你唯一能活出的真實。」—— 弗里德里希·尼采",
+      "「荒謬生於人類渴望與非理性世界碰撞的寂靜裂縫。」—— 阿爾貝·卡繆",
+      "「那些殺不死我的，使我更堅強。」—— 弗里德里希·尼采",
+      "「真正的救贖不是逃離重擔，而是在背負的過程中看清世界的秩序。」"
+    ];
+
+    let audioEnabled = true;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx && AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'tick') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'rumble') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(110, now);
+          osc.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+          osc.start(now);
+          osc.stop(now + 0.6);
+        } else if (type === 'fanfare') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(640, now + 0.4);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        }
+      } catch (e) {
+        // 音訊被瀏覽器策略限制時靜默防錯
+      }
+    }
+
+    document.getElementById('audioToggle').addEventListener('click', (e) => {
+      audioEnabled = !audioEnabled;
+      e.target.classList.toggle('active', audioEnabled);
+      e.target.textContent = `音效: ${audioEnabled ? 'ON' : 'OFF'}`;
+      if (audioEnabled) playSound('tick');
+    });
+
+    // 隨機輪播哲學名句
+    setInterval(() => {
+      const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+      document.getElementById('philosophicalQuote').textContent = q;
+    }, 14000);
+
+    /* ==========================================================================
+       2. 薛西弗斯推石畫布物理模擬 (HTML5 Canvas Physics)
+       ========================================================================== */
+    const canvas = document.getElementById('sisyphusCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // 物理狀態變數
+    let currentProgress = 0; // 0.0 ~ 1.0 (平滑過渡用)
+    let targetProgress = 0;  // 根據任務權重計算的目標
+    let isRollingDown = false;
+    let rollVelocity = 0;
+    let boulderRotation = 0;
+    let particles = [];
+    let summitCountVal = parseInt(localStorage.getItem('sisyphus_summits') || '0', 10);
+
+    document.getElementById('summitCount').textContent = summitCountVal;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // 粒子系統
+    function spawnDust(x, y, count = 3) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 2.5,
+          vy: (Math.random() - 0.5) * 2 - 1,
+          size: Math.random() * 2.5 + 1,
+          alpha: 1,
+          decay: Math.random() * 0.03 + 0.02
+        });
+      }
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function renderLoop() {
+      const width = canvas.width / window.devicePixelRatio;
+      const height = canvas.height / window.devicePixelRatio;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // 定義山坡起訖點座標
+      const startX = 60;
+      const startY = height - 50;
+      const endX = width - 70;
+      const endY = 80;
+
+      // 繪製山體與斜面
+      ctx.beginPath();
+      ctx.moveTo(startX - 60, height);
+      ctx.lineTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.lineTo(width + 20, endY + 40);
+      ctx.lineTo(width + 20, height);
+      ctx.closePath();
+      ctx.fillStyle = '#141820';
+      ctx.fill();
+
+      // 繪製斜坡脊線高光
+      ctx.beginPath();
+      ctx.moveTo(startX - 60, height);
+      ctx.lineTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.strokeStyle = '#3B4252';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // 物理過渡插值
+      if (isRollingDown) {
+        currentProgress -= rollVelocity;
+        boulderRotation -= rollVelocity * 10;
+        rollVelocity += 0.002; // 滾落重力加速度
+
+        const curX = startX + (endX - startX) * Math.max(0, currentProgress);
+        const curY = startY + (endY - startY) * Math.max(0, currentProgress);
+        spawnDust(curX, curY + 10, 2);
+
+        if (currentProgress <= 0) {
+          currentProgress = 0;
+          isRollingDown = false;
+          rollVelocity = 0;
+          playSound('rumble');
+          document.getElementById('philosophicalQuote').textContent =
+            "「巨石再度回到山腳。荒謬已成常態，但抗爭的意志始終由你重啟。」";
+        }
+      } else {
+        const diff = targetProgress - currentProgress;
+        if (Math.abs(diff) > 0.002) {
+          currentProgress += diff * 0.08;
+          boulderRotation += diff * 6;
+          const curX = startX + (endX - startX) * currentProgress;
+          const curY = startY + (endY - startY) * currentProgress;
+          spawnDust(curX, curY + 12, 1);
+        }
+      }
+
+      // 更新與繪製粒子
+      updateParticles();
+      particles.forEach(p => {
+        ctx.fillStyle = `rgba(216, 222, 233, ${p.alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 當前巨石與人物位置計算
+      const bX = startX + (endX - startX) * currentProgress;
+      const bY = startY + (endY - startY) * currentProgress;
+      const boulderRadius = 24;
+
+      // 繪製巨石
+      ctx.save();
+      ctx.translate(bX, bY - boulderRadius);
+      ctx.rotate(boulderRotation);
+      ctx.beginPath();
+      ctx.arc(0, 0, boulderRadius, 0, Math.PI * 2);
+      ctx.fillStyle = '#434C5E';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#D8DEE9';
+      ctx.stroke();
+
+      // 巨石岩紋
+      ctx.beginPath();
+      ctx.moveTo(-boulderRadius + 6, 0);
+      ctx.lineTo(boulderRadius - 6, 0);
+      ctx.moveTo(0, -boulderRadius + 6);
+      ctx.lineTo(0, boulderRadius - 6);
+      ctx.strokeStyle = '#2E3440';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+
+      // 繪製薛西弗斯（簡約極簡剪影風格）
+      const slopeAngle = Math.atan2(endY - startY, endX - startX);
+      const pushDist = boulderRadius + 16;
+      const sX = bX - Math.cos(slopeAngle) * pushDist;
+      const sY = bY - Math.sin(slopeAngle) * pushDist;
+
+      ctx.save();
+      ctx.translate(sX, sY);
+      ctx.rotate(slopeAngle);
+
+      // 人物軀幹與頭部
+      ctx.strokeStyle = '#ECEFF4';
+      ctx.fillStyle = '#ECEFF4';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+
+      // 頭部
+      ctx.beginPath();
+      ctx.arc(0, -22, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 脊椎軀幹（前傾發力）
+      ctx.beginPath();
+      ctx.moveTo(0, -17);
+      ctx.lineTo(-4, -6);
+      ctx.stroke();
+
+      // 手臂（推擊巨石姿態）
+      ctx.beginPath();
+      ctx.moveTo(-1, -14);
+      ctx.lineTo(12, -18);
+      ctx.stroke();
+
+      // 後腿蹬地、前腿屈膝
+      ctx.beginPath();
+      ctx.moveTo(-4, -6);
+      ctx.lineTo(-14, 0); // 後腿
+      ctx.moveTo(-4, -6);
+      ctx.lineTo(2, 0);   // 前腿
+      ctx.stroke();
+
+      ctx.restore();
+
+      // 更新儀表板數據
+      document.getElementById('heightTelemetry').textContent = `${Math.round(currentProgress * 100)}%`;
+
+      requestAnimationFrame(renderLoop);
+    }
+    requestAnimationFrame(renderLoop);
+
+    /* ==========================================================================
+       3. 任務管理與權重計算 (Task Management & Weight System)
+       ========================================================================== */
+    let tasks = JSON.parse(localStorage.getItem('sisyphus_tasks') || '[]');
+
+    function saveTasks() {
+      localStorage.setItem('sisyphus_tasks', JSON.stringify(tasks));
+      localStorage.setItem('sisyphus_summits', summitCountVal.toString());
+    }
+
+    function updateTaskTelemetry() {
+      const totalWeight = tasks.reduce((sum, t) => sum + t.weight, 0);
+      const completedWeight = tasks.filter(t => t.completed).reduce((sum, t) => sum + t.weight, 0);
+
+      targetProgress = totalWeight === 0 ? 0 : (completedWeight / totalWeight);
+
+      const completedCount = tasks.filter(t => t.completed).length;
+      document.getElementById('taskTelemetry').textContent = `${completedCount}/${tasks.length}`;
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('taskListContainer');
+      container.innerHTML = '';
+
+      if (tasks.length === 0) {
+        container.innerHTML = `<li style="text-align:center; color: var(--text-muted); padding: 24px 0; font-size: 0.88rem;">目前無任何負擔。輸入一項任務，為存在創造意義。</li>`;
+      }
+
+      tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+        li.innerHTML = `
+          <div class="task-left">
+            <input type="checkbox" class="task-checkbox" data-index="${index}" ${task.completed ? 'checked' : ''}>
+            <span class="task-text">${escapeHtml(task.title)}</span>
+            <span class="task-weight-badge">${task.weight}x 重擔</span>
+          </div>
+          <button class="task-del-btn" data-index="${index}" title="刪除">✕</button>
+        `;
+        container.appendChild(li);
+      });
+
+      updateTaskTelemetry();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('btnAddTask').addEventListener('click', () => {
+      const input = document.getElementById('taskInput');
+      const weightSelect = document.getElementById('taskWeight');
+      const val = input.value.trim();
+      if (!val) return;
+
+      tasks.push({
+        title: val,
+        weight: parseInt(weightSelect.value, 10),
+        completed: false,
+        createdAt: Date.now()
+      });
+
+      input.value = '';
+      saveTasks();
+      renderTasks();
+      playSound('tick');
+    });
+
+    document.getElementById('taskInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btnAddTask').click();
+    });
+
+    document.getElementById('taskListContainer').addEventListener('click', (e) => {
+      const delBtn = e.target.closest('.task-del-btn');
+      const checkbox = e.target.closest('.task-checkbox');
+
+      if (delBtn) {
+        const idx = parseInt(delBtn.dataset.index, 10);
+        tasks.splice(idx, 1);
+        saveTasks();
+        renderTasks();
+        playSound('tick');
+      } else if (checkbox) {
+        const idx = parseInt(checkbox.dataset.index, 10);
+        tasks[idx].completed = checkbox.checked;
+        saveTasks();
+        renderTasks();
+        playSound(checkbox.checked ? 'fanfare' : 'tick');
+      }
+    });
+
+    // 意志登頂按鈕
+    document.getElementById('btnReachSummit').addEventListener('click', () => {
+      if (tasks.length === 0) return;
+      tasks.forEach(t => t.completed = true);
+      summitCountVal++;
+      document.getElementById('summitCount').textContent = summitCountVal;
+      saveTasks();
+      renderTasks();
+      playSound('fanfare');
+      document.getElementById('philosophicalQuote').textContent =
+        "「峰頂已被征服。但這不是終點，而是另一段自覺意志的起點。」";
+    });
+
+    // 承認荒謬並滾落按鈕
+    document.getElementById('btnRollDown').addEventListener('click', () => {
+      if (currentProgress <= 0.05) return;
+      isRollingDown = true;
+      rollVelocity = 0.01;
+      tasks.forEach(t => t.completed = false);
+      saveTasks();
+      renderTasks();
+      playSound('rumble');
+    });
+
+    /* ==========================================================================
+       4. Tab 分頁控制
+       ========================================================================== */
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        playSound('tick');
+      });
+    });
+
+    /* ==========================================================================
+       5. 命運之愛：客觀動機因果解構 (Motive Analyzer)
+       ========================================================================== */
+    document.getElementById('btnAnalyzeMatrix').addEventListener('click', () => {
+      const fact = document.getElementById('factInput').value.trim();
+      const ext = document.getElementById('externalInput').value.trim();
+      const ctrl = document.getElementById('controlInput').value.trim();
+      const resultBox = document.getElementById('matrixResultBox');
+
+      if (!fact || !ext || !ctrl) {
+        alert("請將三項欄位填妥，進行完全的理性解構。");
+        return;
+      }
+
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = `
+        <div style="font-weight:600; color:var(--accent-gold); margin-bottom:4px;">❖ 理性解構行動結論：</div>
+        <p>• <strong>剝離情緒後之客觀情境：</strong>${escapeHtml(fact)}</p>
+        <p>• <strong>對方/外部博弈邏輯：</strong>${escapeHtml(ext)}（此乃外在必然性，無須怨懟）</p>
+        <p>• <strong>絕對掌控與反抗焦點：</strong><span style="color:var(--accent-cyan); font-weight:600;">${escapeHtml(ctrl)}</span></p>
+        <p style="margin-top:6px; font-size:0.8rem; color:var(--text-muted); font-style:italic;">「既然因果已然清晰，剩下的唯有付諸實行。」</p>
+      `;
+      playSound('tick');
+    });
+
+    /* ==========================================================================
+       6. 意志裁決輪盤 (Amor Fati Decision Wheel)
+       ========================================================================== */
+    const wheelCanvas = document.getElementById('wheelCanvas');
+    const wheelCtx = wheelCanvas.getContext('2d');
+    let wheelOptions = ["立刻執行", "拆解最小單元", "重組戰略", "冷靜觀察", "斷然捨棄"];
+    let wheelAngle = 0;
+    let isSpinning = false;
+
+    const WHEEL_COLORS = ["#2E3440", "#3B4252", "#434C5E", "#4C566A", "#1E222A"];
+
+    function drawWheel() {
+      const numOptions = wheelOptions.length;
+      const arc = (2 * Math.PI) / numOptions;
+      const radius = wheelCanvas.width / 2;
+
+      wheelCtx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+
+      for (let i = 0; i < numOptions; i++) {
+        const angle = wheelAngle + i * arc;
+        wheelCtx.beginPath();
+        wheelCtx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length];
+        wheelCtx.moveTo(radius, radius);
+        wheelCtx.arc(radius, radius, radius - 2, angle, angle + arc);
+        wheelCtx.lineTo(radius, radius);
+        wheelCtx.fill();
+        wheelCtx.strokeStyle = '#181B20';
+        wheelCtx.lineWidth = 2;
+        wheelCtx.stroke();
+
+        // 繪製文字
+        wheelCtx.save();
+        wheelCtx.fillStyle = '#ECEFF4';
+        wheelCtx.font = '12px ' + getComputedStyle(document.body).fontFamily;
+        wheelCtx.translate(radius, radius);
+        wheelCtx.rotate(angle + arc / 2);
+        wheelCtx.textAlign = 'right';
+        wheelCtx.fillText(wheelOptions[i], radius - 16, 4);
+        wheelCtx.restore();
+      }
+    }
+
+    drawWheel();
+
+    document.getElementById('btnAddWheelItem').addEventListener('click', () => {
+      const inp = document.getElementById('wheelItemInput');
+      const val = inp.value.trim();
+      if (!val) return;
+      if (wheelOptions.length >= 8) {
+        alert("選項上限為 8 項，過多將分散意志聚焦點。");
+        return;
+      }
+      wheelOptions.push(val);
+      inp.value = '';
+      drawWheel();
+      playSound('tick');
+    });
+
+    document.getElementById('btnSpinWheel').addEventListener('click', () => {
+      if (isSpinning || wheelOptions.length === 0) return;
+
+      isSpinning = true;
+      playSound('tick');
+
+      const spinRounds = 5 + Math.random() * 4; // 隨機旋轉圈數
+      const targetDeltaAngle = spinRounds * 2 * Math.PI + Math.random() * 2 * Math.PI;
+      const duration = 3200; // 毫秒
+      const startTime = performance.now();
+      const startAngle = wheelAngle;
+
+      function animateSpin(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(1, elapsed / duration);
+        // Ease-out cubic 減速曲線
+        const easeOut = 1 - Math.pow(1 - t, 3);
+
+        wheelAngle = startAngle + targetDeltaAngle * easeOut;
+        drawWheel();
+
+        if (t < 1) {
+          requestAnimationFrame(animateSpin);
+        } else {
+          isSpinning = false;
+          // 計算指針停留之項目 (指針在正上方 -PI/2)
+          const numOptions = wheelOptions.length;
+          const arc = (2 * Math.PI) / numOptions;
+          const normalizedAngle = (2 * Math.PI - (wheelAngle % (2 * Math.PI))) % (2 * Math.PI);
+          // 指針在上方 270 度 (3*PI/2)
+          const pointerAngle = (normalizedAngle + 3 * Math.PI / 2) % (2 * Math.PI);
+          const chosenIdx = Math.floor(pointerAngle / arc) % numOptions;
+          const chosenText = wheelOptions[chosenIdx];
+
+          document.getElementById('wheelResultText').innerHTML = `
+            ★ 裁決意志：<strong>${escapeHtml(chosenText)}</strong>
+            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:2px;">
+              「不再猶豫。全力愛上這個選擇，並將其視為唯一宿命。」
+            </span>
+          `;
+          playSound('fanfare');
+        }
+      }
+
+      requestAnimationFrame(animateSpin);
+    });
+
+    // 初始化任務
+    renderTasks();
   </script>
 </body>
 </html>
